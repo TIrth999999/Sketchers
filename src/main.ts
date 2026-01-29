@@ -185,7 +185,7 @@ function animate() {
 animate()
 
 
-canvas.addEventListener('dblclick', (e) => {
+canvas.addEventListener('dblclick', () => {
     if (toolManager.active === 'POLYLINE') {
         addPolyline(polyLinePoints)
 
