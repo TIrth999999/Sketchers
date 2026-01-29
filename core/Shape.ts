@@ -6,14 +6,15 @@ export abstract class Shape {
     color: string
     opacity: number
     isHidden: boolean
-    object3D: THREE.Object3D | null = null
-
+    object3D: THREE.Object3D
+    
     constructor(name: string) {
         this.id = crypto.randomUUID()
         this.name = name
         this.color = 'red'
         this.opacity = 1
         this.isHidden = false
+        this.object3D = new THREE.Group()
     }
 
     toggleHidden() {

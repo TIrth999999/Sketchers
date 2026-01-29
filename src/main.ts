@@ -1,3 +1,4 @@
+import * as THREE from 'three'
 import { Line } from '../shapes/Line'
 import { Circle } from '../shapes/Circle'
 import { Ellipse } from '../shapes/Ellipse'
@@ -34,6 +35,8 @@ import { loadFile } from '../utils/loadFile'
 // Global Variables
 let startPoint: Point | null = null
 let isDrawing = false
+
+let mouse = new THREE.Vector2()
 
 let polyLinePoints: Point[] = []
 
@@ -179,11 +182,11 @@ function addPolyline(cords: Point[]) {
 
 // Loop Function
 function animate() {
+
     renderer.render(scene, camera)
     requestAnimationFrame(animate)
 }
 animate()
-
 
 canvas.addEventListener('dblclick', () => {
     if (toolManager.active === 'POLYLINE') {
@@ -200,8 +203,32 @@ canvas.addEventListener('dblclick', () => {
     }
 })
 
+
 // Used for Polyline
 canvas.addEventListener('click', (e) => {
+
+    if (toolManager.active === 'SELECT') {
+
+        const react = canvas.getBoundingClientRect();
+
+        mouse.x = ((e.clientX - react.left) / react.width) * 2 - 1
+        mouse.y = -(((e.clientY - react.top) / react.height) * 2 - 1)
+        const objectsMesh = shapeStore.getAllShapes().map(ee => ee.object3D)
+        const rayCaster = new THREE.Raycaster()
+        rayCaster.setFromCamera(mouse, camera)
+        const selectedObjects = (rayCaster.intersectObjects(objectsMesh))
+        
+        if (selectedObjects) {
+            const temp = selectedObjects[0].object;
+            const tempId = shapeStore.findByMesh(temp);
+            console.log(tempId)
+            if (tempId) {
+                shapeStore.selectedShapeId = tempId;
+                updateUI();
+            }
+        }
+    }
+
     if (toolManager.active === 'POLYLINE') {
         isDrawing = true
         startPoint = getMouseWorldPoint(e, canvas, camera)

@@ -21,6 +21,13 @@ export class ShapeStore {
         this.selectedShapeId = id
     }
 
+    findByMesh(mesh: THREE.Object3D){
+        for(const shape of this.shapes.values()){
+            if(shape.object3D === mesh) return shape.id;
+        }
+        return null;
+    }
+
     get selectedShape() {
         if (!this.selectedShapeId) return null
         return this.shapes.get(this.selectedShapeId) ?? null
