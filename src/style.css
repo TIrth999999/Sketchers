@@ -974,3 +974,7 @@ input[type="range"]::-moz-range-thumb {
     flex: 1;
   }
 }
+
+.shape-item.selected .shape-info .shape-name{
+  color: #0d1117;
+}

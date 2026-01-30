@@ -21,6 +21,7 @@ export function initTheme({ button, scene }: ThemeOptions) {
       isDarkTheme ? '#0d1117' : '#ffffff'
     )
 
+
     localStorage.setItem('theme', isDarkTheme ? 'dark' : 'light')
   }
 

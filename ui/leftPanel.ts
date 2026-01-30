@@ -114,10 +114,9 @@ export function updateLeftPanel(panelContent: HTMLElement, shapeStore: ShapeStor
                 item.classList.remove('selected')
             })
 
-            shapeItem.classList.add('selected')
-
             shapeStore.select(shape.id)
             updateUI()
+
         })
 
         fileShapes.appendChild(shapeItem)
