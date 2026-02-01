@@ -76,7 +76,6 @@ function updateUI() {
     }
 }
 
-
 function updateSelectionHighlight() {
     if (selectionHelper) {
         scene.remove(selectionHelper)
@@ -311,8 +310,7 @@ canvas.addEventListener('dblclick', () => {
     }
 })
 
-
-// Used for Polyline
+// Used for Polyline & Raycaster
 canvas.addEventListener('click', (e) => {
 
     if (toolManager.active === 'SELECT') {
