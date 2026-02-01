@@ -2,19 +2,53 @@ import { ShapeStore } from '../core/ShapeStore'
 import * as THREE from 'three'
 import { disposeObject3D } from '../utils/dispose'
 
+let searchTerm = ''
+
 export function updateLeftPanel(panelContent: HTMLElement, shapeStore: ShapeStore, scene: THREE.Scene, updateUI: () => void) {
 
     panelContent.innerHTML = ''
 
-    const allShapes = shapeStore.getAllShapes()
+    // Search Bar
+    const searchDiv = document.createElement('div')
+    searchDiv.className = 'panel-search'
+    searchDiv.innerHTML = `
+        <i class="fas fa-search"></i>
+        <input type="text" placeholder="Search shapes..." value="${searchTerm}">
+    `
+    const searchInput = searchDiv.querySelector('input') as HTMLInputElement
+    searchInput.addEventListener('input', (e) => {
+        searchTerm = (e.target as HTMLInputElement).value
+        updateUI()
+        // Maintain focus
+        const newInput = document.querySelector('.panel-search input') as HTMLInputElement
+        if (newInput) {
+            newInput.focus()
+            newInput.setSelectionRange(newInput.value.length, newInput.value.length)
+        }
+    })
+    panelContent.appendChild(searchDiv)
+
+    let allShapes = shapeStore.getAllShapes()
+
+    // Filter shapes based on search term
+    if (searchTerm) {
+        allShapes = allShapes.filter(s =>
+            s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            s.getType().toLowerCase().includes(searchTerm.toLowerCase())
+        )
+    }
 
     if (allShapes.length === 0) {
-        panelContent.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-shapes"></i>
-                <p>No shapes yet.<br>Start drawing!</p>
-            </div>
+        const emptyState = document.createElement('div')
+        emptyState.className = 'empty-state'
+        emptyState.innerHTML = searchTerm ? `
+            <i class="fas fa-search"></i>
+            <p>No shapes match "${searchTerm}"</p>
+        ` : `
+            <i class="fas fa-shapes"></i>
+            <p>No shapes yet.<br>Start drawing!</p>
         `
+        panelContent.appendChild(emptyState)
         return
     }
 

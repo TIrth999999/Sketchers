@@ -43,6 +43,9 @@ let polyLinePoints: Point[] = []
 // Preview Shape
 let previewShape: PreviewShape | null = null
 
+// Selection Helper
+let selectionHelper: THREE.BoxHelper | null = null
+
 // Getting Canvas and Size
 const canvas = document.querySelector('.webgl') as HTMLCanvasElement
 const container = document.getElementById('canvas-container') as HTMLDivElement
@@ -65,6 +68,27 @@ const panelContentR = document.getElementById('rightPanelContent')!
 function updateUI() {
     updateLeftPanel(panelContent, shapeStore, scene, updateUI)
     updateRightPanel(panelContentR, shapeStore, scene, updateUI)
+    updateSelectionHighlight()
+
+    if (shapeStore.selectedShapeId) {
+        toolManager.set('SELECT')
+        if (navbar) navbar.setTool('SELECT')
+    }
+}
+
+
+function updateSelectionHighlight() {
+    if (selectionHelper) {
+        scene.remove(selectionHelper)
+        disposeObject3D(selectionHelper)
+        selectionHelper = null
+    }
+
+    const selectedShape = shapeStore.selectedShape
+    if (selectedShape && selectedShape.object3D && !selectedShape.isHidden) {
+        selectionHelper = new THREE.BoxHelper(selectedShape.object3D, 'blue')
+        scene.add(selectionHelper)
+    }
 }
 
 // Theme Toggle - UI
@@ -127,7 +151,7 @@ if (clearBtn) {
 }
 
 // Navbar Init - UI
-initNavbar({
+const navbar = initNavbar({
     leftPanel: document.getElementById('leftPanel') as HTMLElement,
     rightPanel: document.getElementById('rightPanel') as HTMLElement,
     leftPanelToggle: document.getElementById('leftPanelToggle') as HTMLButtonElement,
@@ -137,8 +161,52 @@ initNavbar({
     toolButtons: document.querySelectorAll<HTMLButtonElement>('.tool-btn[data-tool]'),
     onToolSelect: (tool: string) => {
         toolManager.set(tool)
+        checkTutorial(tool)
     }
 })
+
+// Tutorial Logic
+const sessionTutorialsSeen: Record<string, boolean> = {}
+
+function checkTutorial(tool: string) {
+    if (['LINE', 'CIRCLE', 'POLYLINE', 'ELLIPSE'].includes(tool) && !sessionTutorialsSeen[tool]) {
+        showTutorial(tool)
+    } else {
+        hideTutorial()
+    }
+}
+
+function showTutorial(tool: string) {
+    const player = document.getElementById('tutorialPlayer')
+    const video = document.getElementById('tutorialVideo') as HTMLVideoElement
+    if (!player || !video) return
+
+    const videoSources: Record<string, string> = {
+        'LINE': 'line.mp4',
+        'CIRCLE': 'circle.mp4',
+        'POLYLINE': 'polyline.mp4',
+        'ELLIPSE': 'ellipse.mp4'
+    }
+
+    video.src = videoSources[tool] || ''
+    player.classList.remove('hidden')
+    video.play()
+
+    sessionTutorialsSeen[tool] = true
+}
+
+function hideTutorial() {
+    const player = document.getElementById('tutorialPlayer')
+    const video = document.getElementById('tutorialVideo') as HTMLVideoElement
+    if (player) player.classList.add('hidden')
+    if (video) video.pause()
+}
+
+const closeTutorialBtn = document.getElementById('closeTutorial')
+if (closeTutorialBtn) {
+    closeTutorialBtn.addEventListener('click', hideTutorial)
+}
+
 
 function addLine(startPoint: Point, endPoint: Point): void {
     const shape = new Line(startPoint, endPoint)
@@ -190,6 +258,7 @@ animate()
 
 canvas.addEventListener('dblclick', () => {
     if (toolManager.active === 'POLYLINE') {
+        polyLinePoints.pop()
         addPolyline(polyLinePoints)
 
         if (previewShape)
@@ -213,21 +282,35 @@ canvas.addEventListener('click', (e) => {
 
         mouse.x = ((e.clientX - react.left) / react.width) * 2 - 1
         mouse.y = -(((e.clientY - react.top) / react.height) * 2 - 1)
-        const objectsMesh = shapeStore.getAllShapes().map(ee => ee.object3D)
+
+        const objectsMesh: THREE.Object3D[] = []
+        shapeStore.getAllShapes().forEach(shape => {
+            if (shape.object3D && !shape.isHidden) {
+                objectsMesh.push(shape.object3D)
+            }
+        })
+
         const rayCaster = new THREE.Raycaster()
         rayCaster.setFromCamera(mouse, camera)
-        const selectedObjects = (rayCaster.intersectObjects(objectsMesh))
-        
-        if (selectedObjects) {
-            const temp = selectedObjects[0].object;
-            const tempId = shapeStore.findByMesh(temp);
-            console.log(tempId)
-            if (tempId) {
-                shapeStore.selectedShapeId = tempId;
-                updateUI();
+        const selectedObjects = rayCaster.intersectObjects(objectsMesh, true)
+
+        if (selectedObjects.length > 0) {
+            let mesh = selectedObjects[0].object
+            let shapeId = shapeStore.findByMesh(mesh)
+
+            if (shapeId) {
+                shapeStore.select(shapeId)
+                toolManager.set('SELECT')
+                navbar.setTool('SELECT')
+            } else {
+                shapeStore.select(null)
             }
+        } else {
+            shapeStore.select(null)
         }
+        updateUI()
     }
+
 
     if (toolManager.active === 'POLYLINE') {
         isDrawing = true

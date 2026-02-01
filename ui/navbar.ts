@@ -49,6 +49,16 @@ export function initNavbar({
 
   return {
     closeLeft: () => leftPanel.classList.add('collapsed'),
-    closeRight: () => rightPanel.classList.add('collapsed')
+    closeRight: () => rightPanel.classList.add('collapsed'),
+    setTool: (toolId: string) => {
+      toolButtons.forEach(btn => {
+        if (btn.dataset.tool === toolId) {
+          btn.classList.add('active')
+        } else {
+          btn.classList.remove('active')
+        }
+      })
+    }
   }
 }
+

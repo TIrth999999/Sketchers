@@ -4,7 +4,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sketcher — Precision Drawing Tool</title>
+  <title>Sketcher</title>
+
+  <link rel="icon" href="logo.png" type="image/x-icon">
 
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
@@ -27,7 +29,7 @@
         <i class="fas fa-bars"></i>
       </button>
       <div class="logo">
-        <i class="fas fa-vector-square"></i>
+        <img src="logo.png" width="24px" height="24px">
         <span>SKETCHER</span>
       </div>
     </div>
@@ -139,12 +141,22 @@
         </div>
       </div>
 
+      <!-- Tutorial Player -->
+      <div id="tutorialPlayer" class="tutorial-player hidden">
+        <button class="close-tutorial" id="closeTutorial">
+          <i class="fas fa-times"></i>
+        </button>
+        <div class="tutorial-header">How to draw</div>
+        <video id="tutorialVideo" loop muted playsinline></video>
+      </div>
+
       <!-- Coordinate Display -->
       <div class="canvas-info">
         <i class="fas fa-crosshairs"></i>
         <span id="canvasCoords">X: 0.00 | Y: 0.00</span>
       </div>
     </div>
+
 
     <!-- Right Panel -->
     <div class="panel panel-right" id="rightPanel">
