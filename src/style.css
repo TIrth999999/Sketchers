@@ -1018,7 +1018,11 @@ input[type="range"]::-moz-range-thumb {
   letter-spacing: 0.5px;
   color: #000000;
   margin-bottom: 8px;
-  opacity: 0.8;
+  opacity: 1;
+}
+
+body.dark-theme .tutorial-header {
+  color: #ffffff;
 }
 
 .tutorial-player video {
@@ -1052,4 +1056,34 @@ input[type="range"]::-moz-range-thumb {
 body.dark-theme .tutorial-player {
   background: rgba(22, 27, 34, 0.4);
   border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Video Loader */
+.video-loader {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  z-index: 101;
+  pointer-events: none;
+}
+
+.video-loader.hidden {
+  display: none;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }

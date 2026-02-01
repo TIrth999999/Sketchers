@@ -176,9 +176,45 @@ function checkTutorial(tool: string) {
     }
 }
 
+const closeTutorialBtn = document.getElementById('closeTutorial')
+if (closeTutorialBtn) {
+    closeTutorialBtn.addEventListener('click', hideTutorial)
+}
+
+// Video Preloading Logic
+const tutorialVideos = ['line.mp4', 'circle.mp4', 'polyline.mp4', 'ellipse.mp4']
+const preloadedVideos: Record<string, string> = {}
+
+async function preloadVideos() {
+    tutorialVideos.map(async (src) => {
+        try {
+            const response = await fetch(src)
+            const blob = await response.blob()
+            const blobUrl = URL.createObjectURL(blob)
+            preloadedVideos[src] = blobUrl
+        } catch (error) {
+            console.error(`Failed to preload video: ${src}`, error)
+            preloadedVideos[src] = src
+        }
+    })
+}
+
+// Start preloading in background
+preloadVideos()
+
+function hideTutorial() {
+    const player = document.getElementById('tutorialPlayer')
+    const video = document.getElementById('tutorialVideo') as HTMLVideoElement
+    const loader = document.getElementById('videoLoader')
+    if (player) player.classList.add('hidden')
+    if (video) video.pause()
+    if (loader) loader.classList.add('hidden')
+}
+
 function showTutorial(tool: string) {
     const player = document.getElementById('tutorialPlayer')
     const video = document.getElementById('tutorialVideo') as HTMLVideoElement
+    const loader = document.getElementById('videoLoader')
     if (!player || !video) return
 
     const videoSources: Record<string, string> = {
@@ -188,23 +224,26 @@ function showTutorial(tool: string) {
         'ELLIPSE': 'ellipse.mp4'
     }
 
-    video.src = videoSources[tool] || ''
+    const src = videoSources[tool] || ''
+    const preloadedSrc = preloadedVideos[src]
+
+    if (!preloadedSrc) {
+        if (loader) loader.classList.remove('hidden')
+        video.src = src
+    } else {
+        if (loader) loader.classList.add('hidden')
+        video.src = preloadedSrc
+    }
+
+    // Hide loader once video is actually playing
+    video.onplaying = () => {
+        if (loader) loader.classList.add('hidden')
+    }
+
     player.classList.remove('hidden')
     video.play()
 
     sessionTutorialsSeen[tool] = true
-}
-
-function hideTutorial() {
-    const player = document.getElementById('tutorialPlayer')
-    const video = document.getElementById('tutorialVideo') as HTMLVideoElement
-    if (player) player.classList.add('hidden')
-    if (video) video.pause()
-}
-
-const closeTutorialBtn = document.getElementById('closeTutorial')
-if (closeTutorialBtn) {
-    closeTutorialBtn.addEventListener('click', hideTutorial)
 }
 
 
