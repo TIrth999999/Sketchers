@@ -356,7 +356,11 @@ canvas.addEventListener('click', (e) => {
         startPoint = getMouseWorldPoint(e, canvas, camera)
         polyLinePoints.push(startPoint)
         previewShape = createPolyline(polyLinePoints)
-        scene.add(previewShape)
+        if (previewShape) {
+            previewShape.renderOrder = 999
+            previewShape.position.z = 0.1
+            scene.add(previewShape)
+        }
     }
 })
 
@@ -447,7 +451,11 @@ canvas.addEventListener('mousemove', (event) => {
 
 
 
-    scene.add(previewShape!)
+    if (previewShape) {
+        previewShape.renderOrder = 999
+        previewShape.position.z = 0.1
+        scene.add(previewShape)
+    }
 })
 
 // Clear Preview
