@@ -43,9 +43,6 @@ let polyLinePoints: Point[] = []
 // Preview Shape
 let previewShape: PreviewShape | null = null
 
-// Selection Helper
-let selectionHelper: THREE.BoxHelper | null = null
-
 // Getting Canvas and Size
 const canvas = document.querySelector('.webgl') as HTMLCanvasElement
 const container = document.getElementById('canvas-container') as HTMLDivElement
@@ -76,18 +73,14 @@ function updateUI() {
     }
 }
 
-function updateSelectionHighlight() {
-    if (selectionHelper) {
-        scene.remove(selectionHelper)
-        disposeObject3D(selectionHelper)
-        selectionHelper = null
-    }
 
-    const selectedShape = shapeStore.selectedShape
-    if (selectedShape && selectedShape.object3D && !selectedShape.isHidden) {
-        selectionHelper = new THREE.BoxHelper(selectedShape.object3D, 'blue')
-        scene.add(selectionHelper)
-    }
+function updateSelectionHighlight() {
+    shapeStore.getAllShapes().forEach(shape => {
+        const mesh = shape.object3D;
+        if (mesh && 'material' in mesh) {
+            (mesh.material as THREE.Material & { color: THREE.Color }).color.set(shape.color);
+        }
+    });
 }
 
 // Theme Toggle - UI
@@ -159,8 +152,12 @@ const navbar = initNavbar({
     rightPanelClose: document.getElementById('rightPanelClose') as HTMLButtonElement,
     toolButtons: document.querySelectorAll<HTMLButtonElement>('.tool-btn[data-tool]'),
     onToolSelect: (tool: string) => {
+        if (tool !== 'SELECT') {
+            shapeStore.select(null)
+        }
         toolManager.set(tool)
         checkTutorial(tool)
+        updateUI()
     }
 })
 
@@ -288,6 +285,16 @@ function addPolyline(cords: Point[]) {
 
 // Loop Function
 function animate() {
+    const selectedShape = shapeStore.selectedShape
+    if (selectedShape && selectedShape.object3D && !selectedShape.isHidden) {
+        const mesh = selectedShape.object3D
+        if (mesh && 'material' in mesh) {
+            const time = Date.now() * 0.001
+            const hue = (time % 1)
+            const material = mesh.material as THREE.Material & { color: THREE.Color }
+            material.color.setHSL(hue, 0.7, 0.5)
+        }
+    }
 
     renderer.render(scene, camera)
     requestAnimationFrame(animate)
@@ -310,7 +317,8 @@ canvas.addEventListener('dblclick', () => {
     }
 })
 
-// Used for Polyline & Raycaster
+
+// Used for Polyline
 canvas.addEventListener('click', (e) => {
 
     if (toolManager.active === 'SELECT') {
@@ -332,29 +340,11 @@ canvas.addEventListener('click', (e) => {
         const selectedObjects = rayCaster.intersectObjects(objectsMesh, true)
 
         if (selectedObjects.length > 0) {
-            let smallestShapeId: string | null = null;
-            let minArea = Infinity;
+            let mesh = selectedObjects[selectedObjects.length - 1].object
+            let shapeId = shapeStore.findByMesh(mesh)
 
-            for (const hit of selectedObjects) {
-                const mesh = hit.object;
-                const shapeId = shapeStore.findByMesh(mesh);
-
-                if (shapeId) {
-                    // Calculate 2D area of the bounding box
-                    const box = new THREE.Box3().setFromObject(mesh);
-                    const size = new THREE.Vector3();
-                    box.getSize(size);
-                    const area = size.x * size.y;
-
-                    if (area < minArea) {
-                        minArea = area;
-                        smallestShapeId = shapeId;
-                    }
-                }
-            }
-
-            if (smallestShapeId) {
-                shapeStore.select(smallestShapeId)
+            if (shapeId) {
+                shapeStore.select(shapeId)
                 toolManager.set('SELECT')
                 navbar.setTool('SELECT')
             } else {
@@ -382,6 +372,13 @@ canvas.addEventListener('click', (e) => {
 
 // Used When user clicks and holds the click
 canvas.addEventListener('mousedown', (event) => {
+    if (['LINE', 'CIRCLE', 'ELLIPSE', 'POLYLINE'].includes(toolManager.active)) {
+        if (shapeStore.selectedShapeId) {
+            shapeStore.select(null)
+            updateUI()
+        }
+    }
+
     if (toolManager.active === 'LINE') {
         startPoint = getMouseWorldPoint(event, canvas, camera)
         isDrawing = true
