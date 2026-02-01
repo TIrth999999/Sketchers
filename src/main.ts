@@ -334,11 +334,29 @@ canvas.addEventListener('click', (e) => {
         const selectedObjects = rayCaster.intersectObjects(objectsMesh, true)
 
         if (selectedObjects.length > 0) {
-            let mesh = selectedObjects[0].object
-            let shapeId = shapeStore.findByMesh(mesh)
+            let smallestShapeId: string | null = null;
+            let minArea = Infinity;
 
-            if (shapeId) {
-                shapeStore.select(shapeId)
+            for (const hit of selectedObjects) {
+                const mesh = hit.object;
+                const shapeId = shapeStore.findByMesh(mesh);
+
+                if (shapeId) {
+                    // Calculate 2D area of the bounding box
+                    const box = new THREE.Box3().setFromObject(mesh);
+                    const size = new THREE.Vector3();
+                    box.getSize(size);
+                    const area = size.x * size.y;
+
+                    if (area < minArea) {
+                        minArea = area;
+                        smallestShapeId = shapeId;
+                    }
+                }
+            }
+
+            if (smallestShapeId) {
+                shapeStore.select(smallestShapeId)
                 toolManager.set('SELECT')
                 navbar.setTool('SELECT')
             } else {
